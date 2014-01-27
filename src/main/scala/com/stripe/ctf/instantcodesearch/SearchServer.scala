@@ -27,7 +27,7 @@ class SearchServer(port : Int, id : Int) extends AbstractSearchServer(port, id) 
 
     FuturePool.unboundedPool {
       System.err.println("[node #" + id + "] Indexing path: " + path)
-      indexer.index()
+      indexer.index(id)
       System.err.println("[node #" + id + "] Writing index to: " + IndexPath)
       indexer.write(IndexPath)
       indexed = true

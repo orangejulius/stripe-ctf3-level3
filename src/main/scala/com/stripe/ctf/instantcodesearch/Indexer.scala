@@ -10,7 +10,7 @@ class Indexer(indexPath: String) {
   val root = FileSystems.getDefault().getPath(indexPath)
   val idx = new Index(root.toAbsolutePath.toString)
 
-  def index() : Indexer = {
+  def index(id: Int) : Indexer = {
     Files.walkFileTree(root, new SimpleFileVisitor[Path] {
       override def preVisitDirectory(dir : Path, attrs : BasicFileAttributes) : FileVisitResult = {
         if (Files.isHidden(dir) && dir.toString != ".")
@@ -23,6 +23,12 @@ class Indexer(indexPath: String) {
         if (!Files.isRegularFile(file, LinkOption.NOFOLLOW_LINKS))
           return FileVisitResult.CONTINUE
         if (Files.size(file) > (1 << 20))
+          return FileVisitResult.CONTINUE
+        val md = java.security.MessageDigest.getInstance("SHA-1")
+        //println(file.toString())
+        //println("last byte: " + md.digest(file.toString().getBytes).last.toInt.abs)
+        //println("mod 3: " + md.digest(file.toString().getBytes).last.toInt.abs % 3)
+        if (md.digest(file.toString().getBytes).last.toInt.abs % 3 != (id - 1))
           return FileVisitResult.CONTINUE
         val bytes = Files.readAllBytes(file)
         if (Arrays.asList(bytes).indexOf(0) > 0)
