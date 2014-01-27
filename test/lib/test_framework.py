@@ -157,7 +157,7 @@ class AbstractRunner(object):
         util.logger.info(user_output[0:1000])
         diff = list(difflib.Differ().compare(benchmark_output.splitlines(True),
                                              user_output.splitlines(True)))
-        lines = filter(lambda line: line[0] != "?", diff[0:20])
+        lines = filter(lambda line: line[0] != "?", diff[0:20000])
         util.logger.info("\n***********\n")
         util.logger.info("Here is the head of the diff between your output and the benchmark:")
         util.logger.info("".join(lines))
@@ -184,6 +184,7 @@ class AbstractRunner(object):
         id = test_case['id']
         util.logger.info("About to run test case: %s" % id)
         input = test_case['input']
+	print test_case['input']
         result = self.run_input(input)
         return self.report_result(test_case, result)
 
