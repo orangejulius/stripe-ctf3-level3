@@ -5,7 +5,7 @@ import java.nio.file._
 
 import com.twitter.concurrent.Broker
 
-import scala.collection.mutable.HashMap
+import scala.collection.concurrent.TrieMap
 
 abstract class SearchResult
 case class Match(path: String, line: Int) extends SearchResult
@@ -14,15 +14,25 @@ case class Done() extends SearchResult
 class Searcher(index : Index)  {
   val root = FileSystems.getDefault().getPath(index.path)
   val cache = getFileCache(index.files)
+  val invertedIndex = getInvertedIndex(index.files)
+  println("finished indexing")
 
   def search(needle : String, b : Broker[SearchResult]) = {
-    for (path <- index.files) {
-      for (m <- tryCache(path, needle)) {
-        b !! m
-      }
+    for (m <- tryInvertedIndex(needle)) {
+      b !! m
     }
 
     b !! new Done()
+  }
+
+  def tryInvertedIndex(needle: String) : Iterable[SearchResult] = {
+    //val needle_words = needle.split(" ")
+    //val results = needle_words.map { word => invertedIndex(word) }
+    //results.flatten
+    println("going to return inverted index results for " + needle)
+    val result = invertedIndex.getOrElse(needle, Array[SearchResult]())
+    println("got result")
+    result
   }
 
   def tryPath(path: String, needle: String) : Iterable[SearchResult] = {
@@ -58,10 +68,26 @@ class Searcher(index : Index)  {
     text.split("\n").zipWithIndex
   }
 
-  def getFileCache(files: List[String]) : HashMap[String, Array[(String, Int)]] = {
-    val hash = new HashMap[String, Array[(String,Int)]]
+  def getFileCache(files: List[String]) : TrieMap[String, Array[(String, Int)]] = {
+    val hash = new TrieMap[String, Array[(String,Int)]]
     files.foreach { file =>
       hash += (file -> getFileLines(file))
+    }
+    hash
+  }
+
+  def getInvertedIndex(files: List[String]) : TrieMap[String, Array[SearchResult]] = {
+    val hash = new TrieMap[String, Array[SearchResult]]
+    files.foreach { file =>
+      val lines = cache(file)
+      lines.foreach { line =>
+	val words = line._1.split(" ")
+	words.foreach { word =>
+	  val results = hash.getOrElse(word, Array[SearchResult]())
+	  val updatedResults = results :+ Match(file, line._2 + 1)
+	  hash += (word -> updatedResults)
+	}
+      }
     }
     hash
   }
