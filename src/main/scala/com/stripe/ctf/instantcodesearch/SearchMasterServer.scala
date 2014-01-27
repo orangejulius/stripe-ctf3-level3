@@ -65,26 +65,23 @@ class SearchMasterServer(port: Int, id: Int) extends AbstractSearchServer(port, 
   }
 
   override def query(q: String) = {
-    val responses = clients.map {client => client.query(q)}
     val responsesF = Future.collect(clients.map {client => client.query(q)})
 
-    val results = responses.map {response =>
-      val json = JSON.parseFull(response.get().getContent().toString(UTF_8))
-      println("json: ")
-      println(json)
-      val map:Map[String,Any] = json.get.asInstanceOf[Map[String, Any]]
-      val resultList = map.get("results").get.asInstanceOf[List[String]]
-      println(resultList)
-      resultList.map { string =>
-	val parts = string.split(':')
-	println(parts)
-	println(parts(0))
-	new Match(parts(0), parts(1).toInt)
-      }
-    }.flatten.toList
+    responsesF.map{ responses =>
+      val results = responses.map { response =>
+	getResultsListFromResponse(response)
+      }.flatten.toList
+      querySuccessResponse(results)
+    }
+  }
 
-    val promise = Promise[HttpResponse]
-    promise.setValue(querySuccessResponse(results))
-    promise
+  def getResultsListFromResponse(response: HttpResponse) = {
+    val json = JSON.parseFull(response.getContent().toString(UTF_8))
+    val map:Map[String,Any] = json.get.asInstanceOf[Map[String, Any]]
+    val resultList = map.get("results").get.asInstanceOf[List[String]]
+    resultList.map { string =>
+      val parts = string.split(':')
+      new Match(parts(0), parts(1).toInt)
+    }
   }
 }
