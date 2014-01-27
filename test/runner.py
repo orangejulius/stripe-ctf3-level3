@@ -102,6 +102,7 @@ class Runner(test_framework.AbstractRunner):
 
         files = test_case_input['files']
         keys = test_case_input['keys']
+	print keys
 
         path = self.TEST_CASE_PATH
 
@@ -140,6 +141,7 @@ class Runner(test_framework.AbstractRunner):
         return {
             'wall_clock_time': average_response_time,
             'output': map(lambda x: x[0], responses),
+	    'keys': keys,
             'input': cmd_line_args,
             'level': self.LEVEL,
             'exitstatus': 0,
@@ -161,6 +163,10 @@ class Runner(test_framework.AbstractRunner):
             for (idx, your) in enumerate(your_output):
                 sorted_benchmark = sorted(benchmark_output[idx])
                 sorted_your = sorted(your)
+		print
+		print
+		print
+		print "results for " + result['keys'][idx]
 
                 if sorted_benchmark != sorted_your:
                     passed = False
