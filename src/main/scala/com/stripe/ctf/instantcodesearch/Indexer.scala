@@ -10,7 +10,7 @@ class Indexer(indexPath: String) {
   val root = FileSystems.getDefault().getPath(indexPath)
   val idx = new Index(root.toAbsolutePath.toString)
 
-  def index(id: Int) : Indexer = {
+  def index(id: Int) : Index = {
     Files.walkFileTree(root, new SimpleFileVisitor[Path] {
       override def preVisitDirectory(dir : Path, attrs : BasicFileAttributes) : FileVisitResult = {
         if (Files.isHidden(dir) && dir.toString != ".")
@@ -47,10 +47,6 @@ class Indexer(indexPath: String) {
       }
     })
 
-    return this
-  }
-
-  def write(path: String) = {
-    idx.write(new File(path))
+    return idx
   }
 }
