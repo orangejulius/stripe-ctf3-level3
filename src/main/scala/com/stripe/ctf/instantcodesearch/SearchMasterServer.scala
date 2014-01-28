@@ -67,12 +67,16 @@ class SearchMasterServer(port: Int, id: Int) extends AbstractSearchServer(port, 
   override def query(q: String) = {
     val responsesF = Future.collect(clients.map {client => client.query(q)})
 
-    responsesF.map{ responses =>
-      val results = responses.map { response =>
+    val promise = new Promise[HttpResponse]
+
+    responsesF onSuccess { responses =>
+      val newResponseContent = responses.map { response =>
 	getResultsListFromResponse(response)
       }.flatten.toList
-      querySuccessResponse(results)
+      promise.setValue(querySuccessResponse(newResponseContent))
     }
+
+    promise
   }
 
   def getResultsListFromResponse(response: HttpResponse) = {
