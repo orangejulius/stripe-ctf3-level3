@@ -9,8 +9,7 @@ abstract class SearchResult
 case class Match(path: String, line: Int) extends SearchResult
 case class Done() extends SearchResult
 
-class Searcher(indexPath : String)  {
-  val index : Index = readIndex(indexPath)
+class Searcher(index : Index)  {
   val root = FileSystems.getDefault().getPath(index.path)
 
   def search(needle : String, b : Broker[SearchResult]) = {
