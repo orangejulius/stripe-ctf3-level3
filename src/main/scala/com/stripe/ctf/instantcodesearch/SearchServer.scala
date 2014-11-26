@@ -7,7 +7,7 @@ import org.jboss.netty.handler.codec.http.{HttpResponse, HttpResponseStatus}
 class SearchServer(port : Int, id : Int) extends AbstractSearchServer(port, id) {
   val IndexPath = "instantcodesearch-" + id + ".index"
   case class Query(q : String, broker : Broker[SearchResult])
-  lazy val searcher = new Searcher(IndexPath)
+  var searcher = new Searcher(new Index("foo"))
   @volatile var indexed = false
 
   override def healthcheck() = {
@@ -27,9 +27,7 @@ class SearchServer(port : Int, id : Int) extends AbstractSearchServer(port, id) 
 
     FuturePool.unboundedPool {
       System.err.println("[node #" + id + "] Indexing path: " + path)
-      indexer.index()
-      System.err.println("[node #" + id + "] Writing index to: " + IndexPath)
-      indexer.write(IndexPath)
+      searcher = new Searcher(indexer.index(id))
       indexed = true
     }
 
